@@ -51,6 +51,46 @@ ctest --test-dir build --output-on-failure
 ./build/toy_shell_model
 ```
 
+## Running safely in an isolated environment
+
+If you prefer **not** to run this directly on your laptop, you can test it in an isolated setup:
+
+1. **Docker container (recommended for local isolation)**
+
+   ```bash
+   docker run --rm -it \
+     -v "$PWD":/work \
+     -w /work \
+     --network none \
+     ubuntu:24.04 bash
+
+   apt-get update && apt-get install -y cmake g++ make
+   cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+   cmake --build build -j
+   ctest --test-dir build --output-on-failure
+   ./build/toy_shell_model
+   ```
+
+   Notes:
+   - `--network none` disables container network access during the run.
+   - The container only sees files mounted under `/work`.
+   - For stricter protection, mount the source as read-only (`-v "$PWD":/work:ro`) and use a separate writable output directory.
+
+2. **Virtual machine**
+   - Use a VM (VirtualBox, VMware, UTM, etc.) and run the repo entirely inside the guest OS.
+   - This gives stronger isolation than a typical Docker setup, at the cost of more overhead.
+
+3. **Remote disposable environment**
+   - Clone and run on a cloud VM / ephemeral dev environment (GitHub Codespaces, Gitpod, CI runner, etc.).
+   - After validation, destroy the environment.
+
+4. **Local sandboxing options**
+   - Use a non-admin user account dedicated to testing.
+   - Restrict permissions to only a test directory.
+   - Combine with filesystem snapshots/backups for easy rollback.
+
+These options help ensure test runs cannot access unrelated personal files on your machine.
+
 ## Example output (toy case)
 
 Representative output for the included toy interaction:
